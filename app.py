@@ -20,54 +20,64 @@ import sys
 warnings.filterwarnings('ignore')
 
 # ============================================
-# AUTO-TRAIN MODEL IF NOT FOUND
+# PAGE CONFIGURATION (MUST BE FIRST)
 # ============================================
-def check_and_train_model():
-    """Check if model exists, if not train it automatically"""
-    model_path = 'models/rf_balanced_smote.pkl'
-    
-    if not os.path.exists(model_path):
-        st.warning("⚠️ Model not found. Training for first time...")
-        st.info("⏳ This takes 2-3 minutes. Please wait. The app will refresh automatically.")
-        
-        # Create models directory
-        os.makedirs('models', exist_ok=True)
-        
-        # Create a progress placeholder
-        progress_placeholder = st.progress(0)
-        status_placeholder = st.empty()
-        
-        status_placeholder.info("📊 Training SMOTE balanced model...")
-        progress_placeholder.progress(25)
-        
-        # Run training script
-        result = subprocess.run([sys.executable, "src/save_model.py"], 
-                                capture_output=True, text=True)
-        
-        progress_placeholder.progress(100)
-        
-        if result.returncode == 0:
-            status_placeholder.success("✅ Model trained successfully!")
-            st.rerun()
-        else:
-            status_placeholder.error("❌ Training failed!")
-            st.code(result.stderr)
-            st.stop()
-
-# Call this BEFORE page config? No, page config must be first.
-# But we can call it after page config but before loading model.
-
-# Page configuration (MUST BE FIRST STREAMLIT COMMAND)
 st.set_page_config(
     page_title="Electricity Theft Detection",
     page_icon="⚡",
     layout="wide"
 )
 
-# Now check and train model if needed
+# ============================================
+# AUTO-TRAIN MODEL IF NOT FOUND
+# ============================================
+def check_and_train_model():
+    """Check if model exists, if not ask user to upload CSV"""
+    model_path = 'models/rf_balanced_smote.pkl'
+    
+    if not os.path.exists(model_path):
+        st.warning("⚠️ Model not found. First time setup required.")
+        st.info("📁 Please upload the ETD2022 dataset (loaded_data.csv) to train the model.")
+        
+        uploaded_file = st.file_uploader("Choose CSV file", type=['csv'], key="train_upload")
+        
+        if uploaded_file is not None:
+            # Save uploaded file temporarily
+            temp_path = "temp_dataset.csv"
+            with open(temp_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            st.info("⏳ Training model... This takes 2-3 minutes. Please wait.")
+            
+            progress_bar = st.progress(0)
+            progress_bar.progress(50)
+            
+            # Run training with the uploaded file
+            result = subprocess.run([sys.executable, "src/save_model.py", temp_path], 
+                                    capture_output=True, text=True)
+            
+            progress_bar.progress(100)
+            
+            # Clean up temp file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            
+            if result.returncode == 0:
+                st.success("✅ Model trained successfully!")
+                st.rerun()
+            else:
+                st.error("❌ Training failed!")
+                st.code(result.stderr)
+                st.stop()
+        else:
+            st.stop()
+
+# Call this to check and train if needed
 check_and_train_model()
 
-# Load trained model (SMOTE Balanced)
+# ============================================
+# LOAD MODEL
+# ============================================
 @st.cache_resource
 def load_model():
     model = joblib.load('models/rf_balanced_smote.pkl')
@@ -101,12 +111,6 @@ st.markdown("""
         border-radius: 10px;
         border-left: 5px solid green;
     }
-    .borderline-status {
-        background-color: #ffffcc;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid orange;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -118,7 +122,7 @@ st.markdown("---")
 # Load model
 try:
     model, scaler, label_encoder, feature_names = load_model()
-    st.sidebar.success("✅ SMOTE Balanced Model Loaded Successfully!")
+    st.sidebar.success("✅ Model Loaded Successfully!")
     st.sidebar.write(f"📊 Features: {len(feature_names)}")
 except Exception as e:
     st.sidebar.error(f"❌ Model error: {e}")
@@ -128,7 +132,6 @@ except Exception as e:
 st.sidebar.header("📊 System Information")
 st.sidebar.markdown(f"**Model:** Random Forest (SMOTE Balanced)")
 st.sidebar.markdown(f"**Accuracy:** 94.60%")
-st.sidebar.markdown(f"**Training:** 1,592,754 balanced samples")
 st.sidebar.markdown(f"**Features:** {len(feature_names)}")
 st.sidebar.markdown("---")
 
@@ -178,7 +181,7 @@ if 'water' not in st.session_state:
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Single Prediction", "📁 Batch Upload", "📊 Live Monitoring", "📈 Analytics", "🔬 Explainable AI"])
 
 # ============================================
-# TAB 1: Single Prediction (keep the rest same)
+# TAB 1: Single Prediction
 # ============================================
 with tab1:
     st.header("🔍 Real-Time Electricity Theft Detection")
@@ -296,7 +299,7 @@ with tab1:
             st.rerun()
 
 # ============================================
-# TAB 2: Batch Upload (keep as is)
+# TAB 2: Batch Upload
 # ============================================
 with tab2:
     st.header("📁 Batch Detection - Upload CSV File")
@@ -336,7 +339,7 @@ with tab2:
                 st.download_button("📥 Download Results", csv, "detection_results.csv", "text/csv")
 
 # ============================================
-# TAB 3: Live Monitoring (keep as is)
+# TAB 3: Live Monitoring
 # ============================================
 with tab3:
     st.header("📊 Live Consumption Monitoring")
@@ -390,7 +393,7 @@ with tab3:
             st.success("✅ Monitoring Complete!")
 
 # ============================================
-# TAB 4: Analytics (keep as is)
+# TAB 4: Analytics
 # ============================================
 with tab4:
     st.header("📈 System Analytics")
@@ -414,7 +417,7 @@ with tab4:
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.barh(feature_importance['Feature'], feature_importance['Importance'], color='steelblue')
     ax.set_xlabel('Importance')
-    ax.set_title('Feature Importance for Theft Detection (SMOTE Balanced Model)')
+    ax.set_title('Feature Importance for Theft Detection')
     st.pyplot(fig)
     
     st.subheader("📖 Theft Type Descriptions")
@@ -423,13 +426,12 @@ with tab4:
             st.markdown(f"**{theft_type}:** {desc}")
 
 # ============================================
-# TAB 5: Explainable AI (keep as is)
+# TAB 5: Explainable AI
 # ============================================
 with tab5:
     st.header("🔬 Explainable AI - Why Did the Model Predict Theft?")
     st.markdown("""
-    **Understanding the decision:** This model was trained on **1.59 million balanced samples** using SMOTE.
-    Feature importance shows what consumption patterns most influence detection.
+    **Understanding the decision:** Feature importance shows what consumption patterns most influence detection.
     """)
     
     col1, col2 = st.columns([1, 1])
@@ -469,9 +471,6 @@ with tab5:
         st.markdown("""
         **Feature Importance Shows:**
         - **Higher importance** = Stronger influence on theft detection
-        - **Interior Lights** (18.7%) = Strongest indicator
-        - **Interior Equipment** (18.0%) = Second strongest
-        - **Electricity: Facility** (13.6%) = Overall pattern
         
         **Confidence Interpretation:**
         - **>80%** = Very certain
@@ -484,13 +483,11 @@ with tab5:
             input_features = np.array([explain_values])
             input_scaled = scaler.transform(input_features)
             
-            # Get prediction
             prediction = model.predict(input_scaled)[0]
             predicted_class = label_encoder.inverse_transform([prediction])[0]
             probabilities = model.predict_proba(input_scaled)
             confidence = np.max(probabilities) * 100
             
-            # Get feature importance
             feature_importance_rf = pd.DataFrame({
                 'Feature': feature_names,
                 'Importance': model.feature_importances_
@@ -498,7 +495,6 @@ with tab5:
             
             st.markdown("---")
             
-            # Show prediction result
             col_res1, col_res2 = st.columns(2)
             with col_res1:
                 st.subheader("📊 Prediction Result")
@@ -510,17 +506,14 @@ with tab5:
             with col_res2:
                 st.subheader("📈 Model Info")
                 st.metric("Accuracy", "94.60%")
-                st.caption("SMOTE Balanced Model | 1.59M training samples")
             
             st.markdown("---")
             
-            # Feature impact bar chart
             st.subheader("🔍 Which Features Most Influence Theft Detection?")
             
             fig, ax = plt.subplots(figsize=(10, 6))
             imp_df = feature_importance_rf.head(8)
-            colors = ['coral' for _ in range(len(imp_df))]
-            bars = ax.barh(imp_df['Feature'], imp_df['Importance'] * 100, color=colors)
+            bars = ax.barh(imp_df['Feature'], imp_df['Importance'] * 100, color='coral')
             ax.set_xlabel('Importance (%)', fontsize=12)
             ax.set_title('Global Feature Importance for Theft Detection', fontsize=14)
             
@@ -530,8 +523,7 @@ with tab5:
             
             st.pyplot(fig)
             
-            # Show probability distribution
-            st.subheader("📊 Class Probability Distribution for This Prediction")
+            st.subheader("📊 Class Probability Distribution")
             prob_df = pd.DataFrame({
                 'Class': label_encoder.classes_,
                 'Probability (%)': probabilities[0] * 100
@@ -539,55 +531,23 @@ with tab5:
             
             fig2, ax2 = plt.subplots(figsize=(8, 4))
             colors2 = ['red' if c != 'Normal' else 'green' for c in prob_df['Class']]
-            bars2 = ax2.barh(prob_df['Class'], prob_df['Probability (%)'], color=colors2)
+            ax2.barh(prob_df['Class'], prob_df['Probability (%)'], color=colors2)
             ax2.set_xlabel('Probability (%)')
             ax2.set_title('Model Confidence Across All Classes')
-            
-            for bar, val in zip(bars2, prob_df['Probability (%)']):
-                ax2.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height()/2, 
-                        f'{val:.1f}%', va='center', fontsize=9)
-            
             st.pyplot(fig2)
             
-            # Interpretation
-            st.subheader("💡 Interpretation & Justification")
+            st.subheader("💡 Interpretation")
             
             if predicted_class != "Normal":
                 st.markdown(f"**🔴 Why was this flagged as theft?**")
-                st.markdown(f"""
-                - The model detected a **{predicted_class}** pattern with {confidence:.1f}% confidence
-                - This theft type is characterized by: {class_descriptions.get(predicted_class, 'Suspicious consumption pattern')}
-                - The energy consumption values deviate from normal patterns
-                """)
+                st.markdown(f"- Detected **{predicted_class}** pattern with {confidence:.1f}% confidence")
+                st.markdown(f"- {class_descriptions.get(predicted_class, 'Suspicious pattern')}")
                 
                 if confidence < 50:
-                    st.info("📌 **Note:** Lower confidence indicates this is a borderline case. The model sees mixed signals and recommends manual review.")
-                
-                st.markdown("**Top indicators for this theft type:**")
-                top_features = feature_importance_rf.head(3)
-                for _, row in top_features.iterrows():
-                    st.markdown(f"- **{row['Feature']}** (importance: {row['Importance']*100:.1f}%)")
-                    
+                    st.info("📌 Low confidence indicates borderline case - manual review recommended")
             else:
                 st.markdown("**🟢 Why was this considered normal?**")
-                st.markdown(f"""
-                - The consumption pattern matches **normal** behavior with {confidence:.1f}% confidence
-                - All energy consumption values are within expected ranges for typical customers
-                - No theft patterns detected in any of the 10 consumption features
-                """)
-            
-            # Detailed feature table
-            with st.expander("📋 View All Feature Importances"):
-                st.dataframe(feature_importance_rf)
-                
-            with st.expander("📖 About SMOTE Balanced Model"):
-                st.markdown("""
-                **This model was trained using SMOTE (Synthetic Minority Over-sampling Technique):**
-                - Original data had imbalanced classes (Theft1: 9.7%, Theft2: 4.4%)
-                - SMOTE created synthetic samples to balance all 6 classes equally
-                - Final training set: 265,459 samples per class (1.59M total)
-                - Result: Fair predictions across all theft types with 94.60% accuracy
-                """)
+                st.markdown(f"- Matches normal behavior with {confidence:.1f}% confidence")
 
 # Footer
 st.markdown("---")

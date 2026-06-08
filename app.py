@@ -169,27 +169,27 @@ REAL_THEFT3 = [13.82, 2.25, 0, 0, 2.87, 5.13, 74.01, 66.13, 2.09, 5.79]
 REAL_THEFT4 = [18.77, 1.64, 0, 0, 4.14, 10.46, 89.15, 68.65, 13.98, 6.52]
 REAL_THEFT5 = [34.46, 2.99, 0, 0, 7.52, 19.00, 155.54, 118.29, 25.40, 11.85]
 
-# Initialize session state for input values
+# Initialize session state for input values (convert to float to avoid type issues)
 if 'elec' not in st.session_state:
-    st.session_state.elec = REAL_NORMAL[0]
+    st.session_state.elec = float(REAL_NORMAL[0])
 if 'fans' not in st.session_state:
-    st.session_state.fans = REAL_NORMAL[1]
+    st.session_state.fans = float(REAL_NORMAL[1])
 if 'cooling' not in st.session_state:
-    st.session_state.cooling = REAL_NORMAL[2]
+    st.session_state.cooling = float(REAL_NORMAL[2])
 if 'heating_elec' not in st.session_state:
-    st.session_state.heating_elec = REAL_NORMAL[3]
+    st.session_state.heating_elec = float(REAL_NORMAL[3])
 if 'lights' not in st.session_state:
-    st.session_state.lights = REAL_NORMAL[4]
+    st.session_state.lights = float(REAL_NORMAL[4])
 if 'equip' not in st.session_state:
-    st.session_state.equip = REAL_NORMAL[5]
+    st.session_state.equip = float(REAL_NORMAL[5])
 if 'gas' not in st.session_state:
-    st.session_state.gas = REAL_NORMAL[6]
+    st.session_state.gas = float(REAL_NORMAL[6])
 if 'heating_gas' not in st.session_state:
-    st.session_state.heating_gas = REAL_NORMAL[7]
+    st.session_state.heating_gas = float(REAL_NORMAL[7])
 if 'equip_gas' not in st.session_state:
-    st.session_state.equip_gas = REAL_NORMAL[8]
+    st.session_state.equip_gas = float(REAL_NORMAL[8])
 if 'water' not in st.session_state:
-    st.session_state.water = REAL_NORMAL[9]
+    st.session_state.water = float(REAL_NORMAL[9])
 
 # Store last prediction for session
 if 'last_prediction' not in st.session_state:
@@ -300,27 +300,72 @@ with tab1:
     
     with col_btn2:
         if st.button("📋 Load Normal", use_container_width=True):
-            st.session_state.elec, st.session_state.fans, st.session_state.cooling, st.session_state.heating_elec, st.session_state.lights, st.session_state.equip, st.session_state.gas, st.session_state.heating_gas, st.session_state.equip_gas, st.session_state.water = REAL_NORMAL
+            st.session_state.elec = float(REAL_NORMAL[0])
+            st.session_state.fans = float(REAL_NORMAL[1])
+            st.session_state.cooling = float(REAL_NORMAL[2])
+            st.session_state.heating_elec = float(REAL_NORMAL[3])
+            st.session_state.lights = float(REAL_NORMAL[4])
+            st.session_state.equip = float(REAL_NORMAL[5])
+            st.session_state.gas = float(REAL_NORMAL[6])
+            st.session_state.heating_gas = float(REAL_NORMAL[7])
+            st.session_state.equip_gas = float(REAL_NORMAL[8])
+            st.session_state.water = float(REAL_NORMAL[9])
             st.rerun()
     
     with col_btn3:
         if st.button("⚠️ Load Theft1", use_container_width=True):
-            st.session_state.elec, st.session_state.fans, st.session_state.cooling, st.session_state.heating_elec, st.session_state.lights, st.session_state.equip, st.session_state.gas, st.session_state.heating_gas, st.session_state.equip_gas, st.session_state.water = REAL_THEFT1
+            st.session_state.elec = float(REAL_THEFT1[0])
+            st.session_state.fans = float(REAL_THEFT1[1])
+            st.session_state.cooling = float(REAL_THEFT1[2])
+            st.session_state.heating_elec = float(REAL_THEFT1[3])
+            st.session_state.lights = float(REAL_THEFT1[4])
+            st.session_state.equip = float(REAL_THEFT1[5])
+            st.session_state.gas = float(REAL_THEFT1[6])
+            st.session_state.heating_gas = float(REAL_THEFT1[7])
+            st.session_state.equip_gas = float(REAL_THEFT1[8])
+            st.session_state.water = float(REAL_THEFT1[9])
             st.rerun()
     
     with col_btn4:
         if st.button("🔄 Load Theft2", use_container_width=True):
-            st.session_state.elec, st.session_state.fans, st.session_state.cooling, st.session_state.heating_elec, st.session_state.lights, st.session_state.equip, st.session_state.gas, st.session_state.heating_gas, st.session_state.equip_gas, st.session_state.water = REAL_THEFT2
+            st.session_state.elec = float(REAL_THEFT2[0])
+            st.session_state.fans = float(REAL_THEFT2[1])
+            st.session_state.cooling = float(REAL_THEFT2[2])
+            st.session_state.heating_elec = float(REAL_THEFT2[3])
+            st.session_state.lights = float(REAL_THEFT2[4])
+            st.session_state.equip = float(REAL_THEFT2[5])
+            st.session_state.gas = float(REAL_THEFT2[6])
+            st.session_state.heating_gas = float(REAL_THEFT2[7])
+            st.session_state.equip_gas = float(REAL_THEFT2[8])
+            st.session_state.water = float(REAL_THEFT2[9])
             st.rerun()
     
     with col_btn5:
         if st.button("📊 Load Theft4", use_container_width=True):
-            st.session_state.elec, st.session_state.fans, st.session_state.cooling, st.session_state.heating_elec, st.session_state.lights, st.session_state.equip, st.session_state.gas, st.session_state.heating_gas, st.session_state.equip_gas, st.session_state.water = REAL_THEFT4
+            st.session_state.elec = float(REAL_THEFT4[0])
+            st.session_state.fans = float(REAL_THEFT4[1])
+            st.session_state.cooling = float(REAL_THEFT4[2])
+            st.session_state.heating_elec = float(REAL_THEFT4[3])
+            st.session_state.lights = float(REAL_THEFT4[4])
+            st.session_state.equip = float(REAL_THEFT4[5])
+            st.session_state.gas = float(REAL_THEFT4[6])
+            st.session_state.heating_gas = float(REAL_THEFT4[7])
+            st.session_state.equip_gas = float(REAL_THEFT4[8])
+            st.session_state.water = float(REAL_THEFT4[9])
             st.rerun()
     
     with col_btn6:
         if st.button("📈 Load Theft5", use_container_width=True):
-            st.session_state.elec, st.session_state.fans, st.session_state.cooling, st.session_state.heating_elec, st.session_state.lights, st.session_state.equip, st.session_state.gas, st.session_state.heating_gas, st.session_state.equip_gas, st.session_state.water = REAL_THEFT5
+            st.session_state.elec = float(REAL_THEFT5[0])
+            st.session_state.fans = float(REAL_THEFT5[1])
+            st.session_state.cooling = float(REAL_THEFT5[2])
+            st.session_state.heating_elec = float(REAL_THEFT5[3])
+            st.session_state.lights = float(REAL_THEFT5[4])
+            st.session_state.equip = float(REAL_THEFT5[5])
+            st.session_state.gas = float(REAL_THEFT5[6])
+            st.session_state.heating_gas = float(REAL_THEFT5[7])
+            st.session_state.equip_gas = float(REAL_THEFT5[8])
+            st.session_state.water = float(REAL_THEFT5[9])
             st.rerun()
 
 # ============================================

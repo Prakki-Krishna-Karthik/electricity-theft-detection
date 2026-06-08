@@ -572,7 +572,7 @@ with tab5:
             
             fig2, ax2 = plt.subplots(figsize=(8, 4))
             colors2 = ['red' if c != 'Normal' else 'green' for c in prob_df['Class']]
-            ax2.barh(prob_df['Class'], prob_df['Probability (%)'), color=colors2)
+            ax2.barh(prob_df['Class'], prob_df['Probability (%)'], color=colors2)
             ax2.set_xlabel('Probability (%)')
             ax2.set_title('Model Confidence Across All Classes')
             st.pyplot(fig2)

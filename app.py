@@ -53,9 +53,13 @@ def check_and_train_model():
             progress_bar = st.progress(0)
             progress_bar.progress(30)
             
-            # Run training with the uploaded file using fix_model.py
-            result = subprocess.run([sys.executable, "src/fix_model.py", temp_path], 
-                                    capture_output=True, text=True)
+            # Run training with the uploaded file
+            result = subprocess.run(
+                [sys.executable, "src/fix_model.py", temp_path], 
+                capture_output=True, 
+                text=True,
+                timeout=300
+            )
             
             progress_bar.progress(100)
             
@@ -68,7 +72,7 @@ def check_and_train_model():
                 st.rerun()
             else:
                 st.error("❌ Training failed!")
-                st.code(result.stderr)
+                st.code(result.stderr if result.stderr else result.stdout)
                 st.stop()
         else:
             st.stop()
@@ -568,7 +572,7 @@ with tab5:
             
             fig2, ax2 = plt.subplots(figsize=(8, 4))
             colors2 = ['red' if c != 'Normal' else 'green' for c in prob_df['Class']]
-            ax2.barh(prob_df['Class'], prob_df['Probability (%)'], color=colors2)
+            ax2.barh(prob_df['Class'], prob_df['Probability (%)'), color=colors2)
             ax2.set_xlabel('Probability (%)')
             ax2.set_title('Model Confidence Across All Classes')
             st.pyplot(fig2)

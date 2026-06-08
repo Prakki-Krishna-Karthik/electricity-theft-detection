@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import sys
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -16,21 +17,33 @@ print("="*70)
 print("TRAINING FIXED MODEL - NO DEFAULT BIAS")
 print("="*70)
 
-# Load data - try different possible paths
-possible_paths = ['results/loaded_data.csv', 'loaded_data.csv', '../results/loaded_data.csv']
-df = None
+# Get CSV file path - either from command line or use default
+csv_path = None
 
-for path in possible_paths:
-    if os.path.exists(path):
-        df = pd.read_csv(path)
-        print(f"✅ Loaded from: {path}")
-        break
+if len(sys.argv) > 1:
+    csv_path = sys.argv[1]
+    print(f"📂 Loading from command line argument: {csv_path}")
+else:
+    # Try possible paths
+    possible_paths = ['results/loaded_data.csv', 'loaded_data.csv', '../results/loaded_data.csv', 'temp_dataset.csv']
+    for path in possible_paths:
+        if os.path.exists(path):
+            csv_path = path
+            print(f"📂 Found dataset at: {path}")
+            break
 
-if df is None:
-    print("❌ Dataset not found! Please upload loaded_data.csv")
-    exit(1)
+if csv_path is None or not os.path.exists(csv_path):
+    print("❌ Dataset not found!")
+    print("   Please ensure loaded_data.csv is in the current directory")
+    sys.exit(1)
 
-print(f"   Shape: {df.shape[0]:,} rows, {df.shape[1]} columns")
+# Load data
+try:
+    df = pd.read_csv(csv_path)
+    print(f"✅ Loaded: {df.shape[0]:,} rows, {df.shape[1]} columns")
+except Exception as e:
+    print(f"❌ Error loading CSV: {e}")
+    sys.exit(1)
 
 # Remove Theft6
 df = df[df['theft'] != 'Theft6']
@@ -54,6 +67,7 @@ y = df['theft']
 # Encode
 le = LabelEncoder()
 y_encoded = le.fit_transform(y)
+print(f"\n📋 Classes: {list(le.classes_)}")
 
 # Scale
 scaler = MinMaxScaler()
@@ -63,6 +77,9 @@ X_scaled = scaler.fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
 )
+
+print(f"\n✂️ Training samples: {X_train.shape[0]:,}")
+print(f"   Test samples: {X_test.shape[0]:,}")
 
 # Custom class weights - Give Theft3 LESS weight so it's not default
 class_counts = pd.Series(y_train).value_counts()
@@ -77,17 +94,18 @@ for class_idx, count in class_counts.items():
     else:
         class_weights[class_idx] = 2.0  # Higher weight for other theft types
 
-print("\n📊 Class weights:")
+print("\n📊 Class weights applied:")
 for class_idx, weight in class_weights.items():
     print(f"   {le.inverse_transform([class_idx])[0]}: {weight}")
 
 # Train
-print("\n🌲 Training Random Forest...")
+print("\n🌲 Training Random Forest (this may take 2-3 minutes)...")
 model = RandomForestClassifier(
     n_estimators=200,
     random_state=42,
     n_jobs=-1,
-    class_weight=class_weights
+    class_weight=class_weights,
+    verbose=0
 )
 model.fit(X_train, y_train)
 
@@ -118,12 +136,14 @@ for name, values in test_cases.items():
     confidence = max(probs) * 100
     print(f"\n{name}: {pred_class} ({confidence:.1f}%)")
 
-# Save
+# Save models
 os.makedirs('models', exist_ok=True)
 joblib.dump(model, 'models/rf_fixed_model.pkl')
 joblib.dump(scaler, 'models/scaler_fixed.pkl')
 joblib.dump(le, 'models/label_encoder_fixed.pkl')
 joblib.dump(feature_cols, 'models/feature_names_fixed.pkl')
 
-print("\n✅ Fixed model saved to 'models/rf_fixed_model.pkl'")
+print("\n" + "="*70)
+print("✅ FIXED MODEL SAVED SUCCESSFULLY!")
+print("   models/rf_fixed_model.pkl")
 print("="*70)

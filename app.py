@@ -13,15 +13,59 @@ import seaborn as sns
 from datetime import datetime
 import time
 import warnings
+import os
+import subprocess
+import sys
+
 warnings.filterwarnings('ignore')
 
+# ============================================
+# AUTO-TRAIN MODEL IF NOT FOUND
+# ============================================
+def check_and_train_model():
+    """Check if model exists, if not train it automatically"""
+    model_path = 'models/rf_balanced_smote.pkl'
+    
+    if not os.path.exists(model_path):
+        st.warning("⚠️ Model not found. Training for first time...")
+        st.info("⏳ This takes 2-3 minutes. Please wait. The app will refresh automatically.")
+        
+        # Create models directory
+        os.makedirs('models', exist_ok=True)
+        
+        # Create a progress placeholder
+        progress_placeholder = st.progress(0)
+        status_placeholder = st.empty()
+        
+        status_placeholder.info("📊 Training SMOTE balanced model...")
+        progress_placeholder.progress(25)
+        
+        # Run training script
+        result = subprocess.run([sys.executable, "src/save_model.py"], 
+                                capture_output=True, text=True)
+        
+        progress_placeholder.progress(100)
+        
+        if result.returncode == 0:
+            status_placeholder.success("✅ Model trained successfully!")
+            st.rerun()
+        else:
+            status_placeholder.error("❌ Training failed!")
+            st.code(result.stderr)
+            st.stop()
 
-# Page configuration
+# Call this BEFORE page config? No, page config must be first.
+# But we can call it after page config but before loading model.
+
+# Page configuration (MUST BE FIRST STREAMLIT COMMAND)
 st.set_page_config(
     page_title="Electricity Theft Detection",
     page_icon="⚡",
     layout="wide"
 )
+
+# Now check and train model if needed
+check_and_train_model()
 
 # Load trained model (SMOTE Balanced)
 @st.cache_resource
@@ -77,7 +121,7 @@ try:
     st.sidebar.success("✅ SMOTE Balanced Model Loaded Successfully!")
     st.sidebar.write(f"📊 Features: {len(feature_names)}")
 except Exception as e:
-    st.sidebar.error(f"❌ Model not found! Please run train_balanced_smote.py first. Error: {e}")
+    st.sidebar.error(f"❌ Model error: {e}")
     st.stop()
 
 # Sidebar
@@ -134,7 +178,7 @@ if 'water' not in st.session_state:
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Single Prediction", "📁 Batch Upload", "📊 Live Monitoring", "📈 Analytics", "🔬 Explainable AI"])
 
 # ============================================
-# TAB 1: Single Prediction
+# TAB 1: Single Prediction (keep the rest same)
 # ============================================
 with tab1:
     st.header("🔍 Real-Time Electricity Theft Detection")
@@ -252,7 +296,7 @@ with tab1:
             st.rerun()
 
 # ============================================
-# TAB 2: Batch Upload
+# TAB 2: Batch Upload (keep as is)
 # ============================================
 with tab2:
     st.header("📁 Batch Detection - Upload CSV File")
@@ -292,7 +336,7 @@ with tab2:
                 st.download_button("📥 Download Results", csv, "detection_results.csv", "text/csv")
 
 # ============================================
-# TAB 3: Live Monitoring
+# TAB 3: Live Monitoring (keep as is)
 # ============================================
 with tab3:
     st.header("📊 Live Consumption Monitoring")
@@ -346,7 +390,7 @@ with tab3:
             st.success("✅ Monitoring Complete!")
 
 # ============================================
-# TAB 4: Analytics
+# TAB 4: Analytics (keep as is)
 # ============================================
 with tab4:
     st.header("📈 System Analytics")
@@ -379,7 +423,7 @@ with tab4:
             st.markdown(f"**{theft_type}:** {desc}")
 
 # ============================================
-# TAB 5: Explainable AI
+# TAB 5: Explainable AI (keep as is)
 # ============================================
 with tab5:
     st.header("🔬 Explainable AI - Why Did the Model Predict Theft?")

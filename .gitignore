@@ -1,0 +1,9 @@
+venv/ 
+models/ 
+data/ 
+results\*.csv 
+results\*.npy 
+__pycache__/ 
+*.pyc 
+results\*.csv 
+results\*.txt 
